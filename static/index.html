@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рассылка погоды</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF2F6;
+    --surface: #FFFFFF;
+    --ink: #1B2733;
+    --slate: #5B6B7A;
+    --line: #D7DEE6;
+    --line-strong: #B7C2CE;
+    --accent: #1E7A8C;
+    --accent-ink: #124F5C;
+    --accent-tint: #E3F0F2;
+    --danger: #B3392B;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 32px 16px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+
+  .card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 36px 32px;
+  }
+
+  .heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--slate);
+    margin: 0 0 28px;
+    line-height: 1.5;
+  }
+
+  .field { margin-bottom: 18px; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+
+  input[type="text"],
+  input[type="email"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    font: inherit;
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--ink);
+    transition: border-color .15s, background .15s, color .15s;
+  }
+
+  input::placeholder { color: var(--slate); opacity: .7; }
+
+  input:disabled {
+    background: var(--bg);
+    color: var(--slate);
+    cursor: not-allowed;
+  }
+
+  input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--slate);
+    margin: 6px 0 0;
+  }
+
+  .row { display: flex; gap: 12px; }
+  .row .field { flex: 1; min-width: 0; }
+
+  @media (max-width: 420px) {
+    .row { flex-direction: column; gap: 0; }
+  }
+
+  fieldset {
+    border: none;
+    padding: 0;
+    margin: 0 0 20px;
+  }
+
+  legend {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    padding: 0;
+  }
+
+  .channel-options { display: flex; gap: 8px; }
+  .channel-option { flex: 1; position: relative; }
+
+  .channel-option input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .channel-option label {
+    display: block;
+    text-align: center;
+    padding: 10px;
+    margin: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color .15s, background .15s, color .15s;
+  }
+
+  .channel-option input:checked + label {
+    border-color: var(--accent);
+    background: var(--accent-tint);
+    color: var(--accent-ink);
+    font-weight: 500;
+  }
+
+  .channel-option input:focus-visible + label {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .channel-detail { margin-top: 12px; }
+  .channel-detail[hidden] { display: none; }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s;
+  }
+
+  button:hover { background: var(--accent-ink); }
+  button:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+  button:disabled { background: var(--line-strong); cursor: not-allowed; }
+
+  #status {
+    min-height: 18px;
+    margin: 14px 0 0;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  #status.error { color: var(--danger); }
+  #status.success { color: var(--accent-ink); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="heading">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+        <line x1="4" y1="22" x2="28" y2="22" stroke="#1E7A8C" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M9 22a7 7 0 0 1 14 0" fill="none" stroke="#1E7A8C" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="16" y1="8" x2="16" y2="11" stroke="#1E7A8C" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="8" y1="12" x2="10" y2="14" stroke="#1E7A8C" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="24" y1="12" x2="22" y2="14" stroke="#1E7A8C" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <h1>Рассылка погоды</h1>
+    </div>
+    <p class="subtitle">Укажите город — и мы будем присылать вам прогноз погоды.</p>
+
+    <form id="signup-form">
+      <div class="field">
+        <label for="name">Имя</label>
+        <input type="text" id="name" name="name" placeholder="Как к вам обращаться" autocomplete="name" required>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="city">Город</label>
+          <input type="text" id="city" name="city" placeholder="City" disabled required>
+        </div>
+        <div class="field">
+          <label for="country">Страна</label>
+          <input type="text" id="country" name="country" placeholder="Country" disabled required>
+        </div>
+      </div>
+      <p class="hint" id="location-hint">Сначала укажите имя</p>
+
+      <fieldset>
+        <legend>Куда присылать погоду</legend>
+        <div class="channel-options">
+          <div class="channel-option">
+            <input type="radio" id="channel-email" name="channel" value="email" checked>
+            <label for="channel-email">Email</label>
+          </div>
+          <div class="channel-option">
+            <input type="radio" id="channel-telegram" name="channel" value="telegram">
+            <label for="channel-telegram">Telegram</label>
+          </div>
+        </div>
+
+        <div class="channel-detail" id="email-detail">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="name@example.com" autocomplete="email">
+        </div>
+        <p class="channel-detail hint" id="telegram-detail" hidden>
+          Telegram подключается отдельным шагом: после сохранения профиля пришлём ссылку на бота.
+        </p>
+      </fieldset>
+
+      <button type="submit">Сохранить</button>
+      <p id="status" role="status"></p>
+    </form>
+  </div>
+
+  <script>
+    const nameInput = document.getElementById('name');
+    const cityInput = document.getElementById('city');
+    const countryInput = document.getElementById('country');
+    const locationHint = document.getElementById('location-hint');
+
+    function syncLocationFields() {
+      const hasName = nameInput.value.trim().length > 0;
+      cityInput.disabled = !hasName;
+      countryInput.disabled = !hasName;
+      locationHint.style.display = hasName ? 'none' : 'block';
+      if (!hasName) {
+        cityInput.value = '';
+        countryInput.value = '';
+      }
+    }
+    nameInput.addEventListener('input', syncLocationFields);
+    syncLocationFields();
+
+    const channelRadios = document.querySelectorAll('input[name="channel"]');
+    const emailDetail = document.getElementById('email-detail');
+    const telegramDetail = document.getElementById('telegram-detail');
+    const emailInput = document.getElementById('email');
+
+    function syncChannelFields() {
+      const isEmail = document.querySelector('input[name="channel"]:checked').value === 'email';
+      emailDetail.hidden = !isEmail;
+      telegramDetail.hidden = isEmail;
+      emailInput.required = isEmail;
+      if (!isEmail) emailInput.value = '';
+    }
+    channelRadios.forEach(r => r.addEventListener('change', syncChannelFields));
+    syncChannelFields();
+
+    const form = document.getElementById('signup-form');
+    const status = document.getElementById('status');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      status.textContent = '';
+      status.className = '';
+
+      const payload = {
+        name: nameInput.value.trim(),
+        city: cityInput.value.trim(),
+        country: countryInput.value.trim(),
+        channel: document.querySelector('input[name="channel"]:checked').value,
+        email: emailInput.value.trim() || null,
+      };
+
+      try {
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          let detail = `сервер ответил ${response.status}`;
+          try {
+            const err = await response.json();
+            if (err.detail) detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+          } catch (_) { /* ignore non-JSON error body */ }
+          throw new Error(detail);
+        }
+
+        status.textContent = 'Готово, настройки сохранены.';
+        status.className = 'success';
+      } catch (error) {
+        status.textContent = 'Не удалось сохранить: ' + error.message;
+        status.className = 'error';
+      }
+    });
+  </script>
+</body>
+</html>
